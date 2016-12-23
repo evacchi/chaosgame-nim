@@ -87,9 +87,15 @@ proc hslToRgb(h: float, s: float, l: float): (uint8, uint8, uint8) =
 proc chaos(ifs: seq[IFS], n: int, pt: Point, color: float, acc: var seq[Point], colors: var seq[float]) =
   if (n != 0):
     #let pp = pts.map(proc(pt:Point):Point = step(ifs, pt))
-   let p = step(ifs, pt)
+    #  let p = step(ifs, pt)
+   
+   let f = random(ifs.len)
+   let p = ifs[f].apply(pt)
+
+   let colorIndex = float(f)/float(ifs.len-1)
+
    acc.add(p)
-   let c = 0.8*(color)
+   let c = 0.5*(color + colorIndex)
    colors.add(c)
    (chaos(ifs, n-1, p, c, acc, colors))
 
@@ -136,9 +142,7 @@ proc sdlMain() =
       # ]
   var pts: seq[Point] = @[]  
   var colors: seq[float] = @[]
-  chaos(ifs, 300000, (0.0, 0.0), 0.0, pts, colors)
-
-    
+  chaos(ifs, 1000000, (0.0, 0.0), 0.0, pts, colors)
 
   fpsman.init
 
@@ -149,12 +153,15 @@ proc sdlMain() =
   
   render.setDrawColor 0,0,0,0xFF
   render.clear
-  for pair in zip(pts,colors):
+
+  for pair in zip(pts,colors):       
     let (pr,c) = pair
-    let (r,g,b) = hslToRgb(c, 0.7, 0.5)
-    echo(c)
-    render.setDrawColor r,g,b,0xff
-    render.drawPoint((Width/2 + pr.x*Width/3).cint, Height-(Height/2 + pr.y*Height/3).cint)
+    let (r,g,b) = hslToRgb((c * 0.5), 0.9, 0.5)
+    render.setDrawBlendMode(BlendMode_Blend)
+
+    # render.setDrawColor r,g,b,127
+    # render.drawPoint((Width/2 + pr.x*Width/3).cint, Height-(Height/2 + pr.y*Height/3).cint)
+    render.filledCircleRGBA((Width/2 + pr.x*Width/3).int16, Height-(Height/2 + pr.y*Height/3).int16, 1, r, g, b, 10)
   render.present
 
   while runGame:
